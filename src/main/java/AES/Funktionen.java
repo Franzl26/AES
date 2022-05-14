@@ -113,20 +113,32 @@ class Funktionen {
         return string.toString();
     }
 
-    static int count = 0;
+    static String matrix2String(char[] array) {
+        StringBuilder s = new StringBuilder();
+        char[] tmp = new char[4];
+        for (int i = 0; i < 4; i++) {
+            tmp[0] = array[i];
+            tmp[1] = array[i + 4];
+            tmp[2] = array[i + 8];
+            tmp[3] = array[i + 12];
+            s.append(arr2hexString(tmp, true));
+            s.append("\n");
+        }
+
+        return s.toString();
+    }
 
     static char[] byteArr2arr(byte[] input) {
         char[] ergebnis = new char[input.length];
-        for (int i = 0; i < ergebnis.length;i++) {
+        for (int i = 0; i < ergebnis.length; i++) {
             ergebnis[i] = (char) ((input[i] + 256) % 256);
         }
-        count++;
         return ergebnis;
     }
 
     static byte[] arr2byteArr(char[] input) {
         byte[] ergebnis = new byte[input.length];
-        for (int i = 0; i < ergebnis.length;i++) {
+        for (int i = 0; i < ergebnis.length; i++) {
             ergebnis[i] = (byte) input[i];
         }
         return ergebnis;

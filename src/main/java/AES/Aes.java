@@ -3,7 +3,6 @@ package AES;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.rmi.UnexpectedException;
 import java.util.Arrays;
 
 import static AES.Funktionen.*;
@@ -11,7 +10,7 @@ import static AES.GaloisField.*;
 
 public class Aes {
     private char[] text;
-    private final KeyGen keyGen;
+    private final RoundKeyGen keyGen;
     private final boolean entschluesseln;
     private final int roundMax;
     private int round = 0;
@@ -22,16 +21,16 @@ public class Aes {
             case 16 -> 10;
             case 24 -> 12;
             case 32 -> 14;
-            default -> throw new IllegalArgumentException("Der Schlüssel hat die falsche Länge");
+            default -> throw new IllegalArgumentException("Der Schlüssel muss 16, 24 oder 32 Byte lang sein");
         };
-        keyGen = new KeyGen(key, entschluesseln);
+        keyGen = new RoundKeyGen(key, entschluesseln);
         this.entschluesseln = entschluesseln;
     }
 
     static char[] aesBlock(char[] text, char[] key, boolean entschluesseln) {
         Aes aes = new Aes(text, key, entschluesseln);
         for (int i = 0; i <= aes.roundMax; i++) aes.aesRound();
-        return aes.getText();
+        return aes.getTextIntern();
     }
 
     static void aesFileCBC(String input, String output, char[] key, boolean entschluesseln) {
@@ -79,27 +78,32 @@ public class Aes {
 
     }
 
-    public void aesRound() {
+    void aesRound() {
         if (round > roundMax) throw new TooManyRoundsException("Maximale Rundenanzahl: " + roundMax + " überschritten");
         if (entschluesseln) aesRoundEntsch(text, keyGen.getNextKey(), round, roundMax);
         else aesRoundVersch(text, keyGen.getNextKey(), round, roundMax);
         round++;
     }
 
-    static void aesRoundVersch(char[] input, char[] key, int round, int roundMax) {
-        if (round == 0) addRoundKey(input, key);
+    public BitArray nextRound() {
+        aesRound();
+        return new BitArray(text);
+    }
+
+    static void aesRoundVersch(char[] input, char[] roundKey, int round, int roundMax) {
+        if (round == 0) addRoundKey(input, roundKey);
         else {
             substituteByte(input);
             shiftRow(input);
             if (round != roundMax) mixColumn(input);
-            addRoundKey(input, key);
+            addRoundKey(input, roundKey);
         }
     }
 
-    static void aesRoundEntsch(char[] input, char[] key, int round, int roundMax) {
-        if (round == roundMax) addRoundKey(input, key);
+    static void aesRoundEntsch(char[] input, char[] roundKey, int round, int roundMax) {
+        if (round == roundMax) addRoundKey(input, roundKey);
         else {
-            addRoundKey(input, key);
+            addRoundKey(input, roundKey);
             if (round != 0) mixColumnInverse(input);
             shiftRowInverse(input);
             substituteByteInverse(input);
@@ -222,11 +226,19 @@ public class Aes {
         }
     }
 
-    char[] getText() {
+    char[] getTextIntern() {
         return text;
+    }
+
+    public BitArray getText() {
+        return new BitArray(text);
     }
 
     char[] getKey() {
         return keyGen.getKey();
+    }
+
+    public int getRoundMax() {
+        return roundMax;
     }
 }

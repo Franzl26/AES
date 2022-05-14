@@ -13,6 +13,10 @@ public class BitArray {
         return array;
     }
 
+    public int length() {
+        return array.length;
+    }
+
     @Override
     public String toString() {
         return arr2hexString(array, false);

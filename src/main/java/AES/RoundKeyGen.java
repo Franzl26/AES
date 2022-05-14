@@ -2,19 +2,19 @@ package AES;
 
 import static AES.Funktionen.*;
 
-public class KeyGen {
+public class RoundKeyGen {
     private char[][] keys;
     private final boolean entschluesseln;
     private int round = 0;
-    private final int maxRounds;
+    private final int roundMax;
 
-    public KeyGen(char[] keyIn, boolean entschluesseln) {
+    public RoundKeyGen(char[] keyIn, boolean entschluesseln) {
         char[] key = keyIn.clone();
-        this.maxRounds = switch (key.length) {
+        this.roundMax = switch (key.length) {
             case 16 -> 10;
             case 24 -> 12;
             case 32 -> 14;
-            default -> throw new IllegalArgumentException("Der Schlüssel hat die falsche Länge");
+            default -> throw new IllegalArgumentException("Der Schlüssel muss 16, 24 oder 32 Byte lang sein");
         };
         this.entschluesseln = entschluesseln;
         keys = new char[key.length + 28][4];
@@ -25,8 +25,8 @@ public class KeyGen {
     }
 
     private void genKeys() {
-        if (maxRounds == 10) genKeys128();
-        else if (maxRounds == 12) genKeys196();
+        if (roundMax == 10) genKeys128();
+        else if (roundMax == 12) genKeys196();
         else genKeys256();
         for (int i = 0; i < keys.length; i++) {
             //System.out.println(i + ": " + arr2hexString(keys[i]));
@@ -79,9 +79,13 @@ public class KeyGen {
         return ergebnis;
     }
 
+    public BitArray nextKey() {
+        return new BitArray(getNextKey());
+    }
+
     char[] getKey() {
         char[] ergebnis = new char[16];
-        int index = entschluesseln ? maxRounds - round : round;
+        int index = entschluesseln ? roundMax - round : round;
         System.arraycopy(keys[index * 4], 0, ergebnis, 0, 4);
         System.arraycopy(keys[index * 4 + 1], 0, ergebnis, 4, 4);
         System.arraycopy(keys[index * 4 + 2], 0, ergebnis, 8, 4);
@@ -89,7 +93,7 @@ public class KeyGen {
         return ergebnis;
     }
 
-    private static char getRC(int i) {
+    static char getRC(int i) {
         if (i < 8) return (char) (1 << i);
         return switch (i) {
             case 8 ->  0b00011011;
@@ -130,5 +134,9 @@ public class KeyGen {
             ergebnis[i] = sBox[zeile][spalte];
         }
         return ergebnis;
+    }
+
+    public int getRoundMax() {
+        return roundMax;
     }
 }
